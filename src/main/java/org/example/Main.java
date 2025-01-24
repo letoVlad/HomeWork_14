@@ -8,9 +8,6 @@ public class Main {
     public static void main(String[] args) {
 
         Calculator taskService = CacheProxy.createProxy(new CalculatorImpl());
-        taskService.factorial(42);
-
-
-
+        taskService.factorial(7);
     }
 }

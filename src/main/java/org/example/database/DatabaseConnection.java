@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.sql.*;
 
 public class DatabaseConnection {
-    DatabaseConfig config = new DatabaseConfig();
+    private final DatabaseConfig config = new DatabaseConfig();
 
     public void saveData(String methodName, String resultMethod) {
         try (var connection = DriverManager.getConnection(
@@ -21,7 +21,7 @@ public class DatabaseConnection {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Ошибка при добавлении данных: " + e.getMessage());
         }
     }
 

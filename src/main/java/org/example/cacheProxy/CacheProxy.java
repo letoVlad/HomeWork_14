@@ -4,44 +4,43 @@ import org.example.database.DatabaseConnection;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.Proxy;
 import java.math.BigInteger;
 
 public class CacheProxy implements InvocationHandler {
     private final Object target;
-    DatabaseConnection databaseConnection = new DatabaseConnection();
+    private final DatabaseConnection databaseConnection;
 
     public CacheProxy(Object target) {
         this.target = target;
+        this.databaseConnection = new DatabaseConnection();
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.isAnnotationPresent(Cachable.class)) {
-            var dataByMethodName = findDataByMethodName(method, args);
-            if (dataByMethodName != null) {
-                return dataByMethodName;
+            BigInteger cachedData = findDataByMethodName(method, args);
+            if (cachedData != null) {
+                return cachedData;
             }
         }
 
         Object result = method.invoke(target, args);
-        saveToDataBase(method, args, result);
-
+        saveToDatabase(method, args, result);
         return result;
     }
 
-    private void saveToDataBase(Method method, Object[] args, Object result) {
-        var methodName = generateCacheKey(method, args);
+    private void saveToDatabase(Method method, Object[] args, Object result) {
+        String methodName = generateCacheKey(method, args);
         databaseConnection.saveData(methodName, result.toString());
     }
 
     private String generateCacheKey(Method method, Object[] args) {
-        StringBuilder key = new StringBuilder(method.getName());
-        for (int i = 0; i < args.length; i++) {
-            key.append("_").append(args[i]);
+        StringBuilder keyBuilder = new StringBuilder(method.getName());
+        for (Object arg : args) {
+            keyBuilder.append("_").append(arg);
         }
-        return key.toString();
+        return keyBuilder.toString();
     }
 
     private BigInteger findDataByMethodName(Method method, Object[] args) {
@@ -49,6 +48,7 @@ public class CacheProxy implements InvocationHandler {
         return databaseConnection.findDataByMethodName(result);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T createProxy(T target) {
         return (T) Proxy.newProxyInstance(
                 target.getClass().getClassLoader(),
